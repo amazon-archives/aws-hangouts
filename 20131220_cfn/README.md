@@ -18,7 +18,7 @@ Store your template files in version control (e.g., git) and use them to launch 
 
 ## Last Night
 ### Updated CloudFormation Management Console
-Adds features like auto-refreshing stack events and alphabetical ordering of stack parameters.
+Adds features like auto-refreshing stack events, a new stack launch and upate wizard that includes alphabetical ordering of input parameters.
 
 ![](img/new-console.png)
 
@@ -26,7 +26,7 @@ You can toggle back to the previous console if you like. Please click the _feedb
 
 ### New Features for Existing Resources:
 * **ELB Cross-Zone Load Balancing**
-* **Elastic Beanstak Worker Tier**
+* **Elastic Beanstalk Worker Tier**
 
 ## Expanded Service Coverage
 
@@ -246,7 +246,7 @@ I can retrieve a session token from STS and use the automatically-expiring crede
         }
     }
 
-* [Informative Blog Post](https://s3.amazonaws.com/cloudformation-templates-us-east-1/SQSWithQueueName.template)
+* [Informative Blog Post](http://aws.typepad.com/aws/2013/10/federated-users-temp-creds-aws-cloudformation.html)
 * [Documentation](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-template.html)
 
 ---
