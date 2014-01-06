@@ -2,6 +2,11 @@ AWS CloudFormation: A Year in Review (Plus Q&A!) Hangout
 ========================================================
 Thanks for joining our first CloudFormation hangout! Developer Community Manager Evan Brown (@evandbrown on [GitHub](http://github.com/evandbrown) and [Twitter](http://twitter.com/evandbrown)) will spend the first 15 minutes of the Hangout reviewing the major features that were introduced for CloudFormation in 2013, and the final 15 minutes answering your questions.
 
+## The Recording
+Watch the recording of the live session - including Q&A - below:
+
+[![](img/video.png)](https://plus.google.com/events/c7hl5l8kamtacnteveco0daasps)
+
 ## About the Q&A
 Q&A is enabled for this Hangout. To ask your question, click the Ask a new question button in the bottom-right corner of your screen, like so:
 
