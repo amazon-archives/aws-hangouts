@@ -20,6 +20,66 @@ You can enter your questions at any point during the hangout. Keep in mind that 
 ## New Features
 
 ## Feature Highlight: {{ mustache }}
+Did you know that CloudFormation supports [mustache](http://mustache.github.io/) templates? Let's use WordPress as an example to see that feature in action.
+
+We can use CloudFormation to launch and bootstrap a WordPress environment with [this sample template](https://s3.amazonaws.com/cloudformation-templates-us-east-1/WordPress_Single_Instance_With_RDS.template). Looking more closely at the template, we see it's using [AWS::CloudFormation::Init](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html) to install and configure WordPress on each instance. Specifically, on line 133 we see the template is creating the important `wp-config.php` file that contains Wordpress configuration information, including database hostname, username, and password:
+
+```json
+...
+"files" : {
+  "/var/www/html/wordpress/wp-config.php" : {
+    "content" : { "Fn::Join" : ["", [
+      "<?php\n",
+      "define('DB_NAME',          '", {"Ref" : "DBName"}, "');\n",
+      "define('DB_USER',          '", {"Ref" : "DBUsername"}, "');\n",
+      "define('DB_PASSWORD',      '", {"Ref" : "DBPassword" }, "');\n",
+      "define('DB_HOST',          '", {"Fn::GetAtt" : ["DBInstance", "Endpoint.Address"]},"');\n",
+      "define('DB_CHARSET',       'utf8');\n",
+      "define('DB_COLLATE',       '');\n"
+    ]] },
+    "mode" : "000644",
+    "owner" : "root",
+    "group" : "root"
+  }
+},
+...
+```
+
+If you've used CloudFormation to bootstrap your instances before, you're probably familiar with using the intrinsic functions `Fn::Join` and `Ref` to build up a file like that. In this example, it looks a lot more like JSON than PHP.
+
+Mustache support in CloudFormation makes it easy to templatize your files, store them in S3, and reference them from within a template without having to build them piecemeal. In the previous example, I templatize `wp-config.php` and store it in S3 as `wp-config.php.tpl`. The resulting template is available [here](wp-config.php.tpl) in this repo. Here's a snippet:
+
+```php
+<?php
+define('DB_NAME',          '{{DBName}}');
+define('DB_USER',          '{{DBUsername}}');
+define('DB_PASSWORD',      '{{DBPassword}}');
+define('DB_HOST',          'localhost');
+define('DB_CHARSET',       'utf8');
+define('DB_COLLATE',       '');
+```
+
+Within my CloudFormation template I still declare an entry for that file, but rather than building the content out using intrinsic functions I simply point to the mustache template in the `source` property and define the substitutions with the `context` object:
+
+```json
+"files" : { 
+    "/var/www/html/wordpress/wp-config.php" : {
+      "source" : "http://s3.amazonaws.com/evbrown/public/wp-config.php.tpl",
+      "mode" : "000644",
+      "owner" : "root",
+      "group" : "root",
+      "context" : {
+        "DBUsername" : {"Ref" : "DBUsername"},
+        "DBPassword" : {"Ref" : "DBPassword"},
+        "DBName" : {"Ref" : "DBName"}
+      }
+    }
+}
+```
+
+The complete CloudFormation template is available [here](wp-mustache.cfn.json) in this repo.
+
+If you have complex files you build inside of CloudFormation JSON, consider how you might use this functionality to centralize these files in S3. In the next office hours we'll discuss how to restrict access to your template files.
 
 ## Focus on the Forums
 
@@ -38,6 +98,7 @@ Two options:
 1. Configure Auto Scaling to notify you when an Instance is added or removed. Handle that notification and use API to create or delete a queue. ( [Documentation](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-as-group.html#cfn-as-group-notificationconfiguration)):
 
     ```json
+    ...
     "AutoScalingGroup" : {
       "Type" : "AWS::AutoScaling::AutoScalingGroup",
       "Properties" : {
@@ -52,6 +113,7 @@ Two options:
         }
      }
     }
+    ...
     ```
 
 2. Create an SQS Queue via SDK/CLI/API on each Instance via UserData (**caveat**: consider how you will delete this Queue when an Instance goes away):
@@ -109,7 +171,7 @@ Use the `BlockDeviceMappings` property of the `AWS::EC2::Instance` or `AWS::Auto
     ]
   }
 },
-..
+...
 ```
 
 For a complete example, see [the documentation](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-ec2.html#scenario-ec2-bdm)
