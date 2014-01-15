@@ -77,7 +77,7 @@ Within my CloudFormation template I still declare an entry for that file, but ra
 }
 ```
 
-The complete CloudFormation template is available [here](wp-mustache.cfn.json) in this repo.
+The complete CloudFormation template is available [here](wp_mustache.cfn.json) in this repo.
 
 If you have complex files you build inside of CloudFormation JSON, consider how you might use this functionality to centralize these files in S3. In the next office hours we'll discuss how to restrict access to your template files.
 
