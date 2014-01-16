@@ -4,6 +4,11 @@ Thanks for joining AWS Developer Community Manager Evan Brown (@evandbrown on [G
 
 [Check out the index](../README.md) for a list of our previous Hangouts, including detailed agenda and recordings.
 
+## The Recording
+Apologies for the video issues! Fortunately audio is intact, and we think we've identified the problem to avoid in future events. Watch the recording of the live session - including Q&A - below:
+
+[![](img/video.png)](https://plus.google.com/events/c2fl0tchd40roion9bdsr2g3c50)
+
 ## Agenda Overview
 * New features since the last Hangout
 * Feature Highlight: Using {{ mustache }} in your CloudFormation templates
