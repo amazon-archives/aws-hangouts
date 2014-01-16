@@ -1,6 +1,6 @@
 AWS CloudFormation Hangout: January 16, 2014
 ========================================================
-Thanks for joining AWS Developer Community Manager Evan Brown (@evandbrown on [GitHub](http://github.com/evandbrown) and [Twitter](http://twitter.com/evandbrown)) for the first Cloudformation Hangout of 2014. The Hangout starts at 9:00 AM PST on Thursday, January 16, and is scheduled for 30 minutes.
+Thanks for joining AWS Developer Community Manager Evan Brown (@evandbrown on [GitHub](http://github.com/evandbrown) and [Twitter](http://twitter.com/evandbrown); or e-mail evbrown (at) amazon.com) for the first Cloudformation Hangout of 2014. The Hangout starts at 9:00 AM PST on Thursday, January 16, and is scheduled for 30 minutes.
 
 [Check out the index](../README.md) for a list of our previous Hangouts, including detailed agenda and recordings.
 
