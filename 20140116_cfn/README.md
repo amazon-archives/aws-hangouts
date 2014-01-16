@@ -18,6 +18,14 @@ Q&A is enabled for this Hangout. To ask your question, click the Ask a new quest
 You can enter your questions at any point during the hangout. Keep in mind that it takes about 50 seconds before the audio and video to make it through all the tubes to your computer, so by the time you've typed your question we may be on another topic. But don't worry! We've got the final half of the Hangout reserved just for Q&A.
 
 ## New Features
+Here's what's been added to CloudFormation in the last 4 weeks:
+
+1. **CloudFormation** - Up to 60 parameters and 60 outputs per template
+2. **Auto Scaling** - Create a group from a running instance; use provisioned IOPS volumes
+3. **SQS** - Update queues and queue policies
+4. **AWS Marketplace** - If you are looking for turnkey solutions, trials or want to sell your own, [AWS Marketplace](https://aws.amazon.com/marketplace) now supports products packaged as CloudFormation templates.
+
+Check out the release notes at [http://aws.amazon.com/releasenotes/AWS-CloudFormation](http://aws.amazon.com/releasenotes/AWS-CloudFormation) for more information.
 
 ## Feature Highlight: {{ mustache }}
 Did you know that CloudFormation supports [mustache](http://mustache.github.io/) templates? Let's use WordPress as an example to see that feature in action.
@@ -88,7 +96,9 @@ If you have complex files you build inside of CloudFormation JSON, consider how 
 * Params are now passed in a simpler "key1=value1;key2=value2" format
 * Passing a CommaDelimistedList param example:
 
-        cfn-create-stack --stack-name demo --template-file demo.json --parameters "PublicSubnets=subnet1,subnet2,subnet3"
+        aws cloudformation create-stack --stack-name demo \
+            --template-body file://demo.json \
+            --parameters ParameterKey=PublicSubnets,ParameterValue='subnet1\,subnet2\,subnet3'
 
 ---
 
