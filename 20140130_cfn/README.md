@@ -7,6 +7,7 @@ This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/
 [Check out the index](../README.md) for a list of our previous Hangouts, including detailed agenda and recordings.
 
 ## Community Agenda Suggestions
+* Non-disruptive application upgrade: how to go from v1 to v2 of your app without downtime? Is it possible to deploy v2 of your app on new instances and flip the DNS all using CloudFormation?
 * Please suggest agenda topics you'd like to see us cover! Fork this repo, add your items to this list, then submit a Pull Request! If we merge your PR, we'll cover the topic in this session!
 
 ## Agenda Overview
