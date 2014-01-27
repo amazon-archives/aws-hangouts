@@ -10,6 +10,7 @@ This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/
 * Non-disruptive application upgrade: how to go from v1 to v2 of your app without downtime? Is it possible to deploy v2 of your app on new instances and flip the DNS all using CloudFormation?
 * How would I make a scalable way of passing Subnet information from one template to another for use with ELBs? ELB Subnets require "Type: A list of strings" however Template Paremeters can be String, Number, or CSV. Some of my regions have 3 AZs, some have 4. Passing subnets with a CSV such as: "ELBSubnets" : { "Fn::Join" : [",", [{ "Ref" : "PublicSubnet0" }, { "Ref" : "PublicSubnet1" }, { "Ref" : "PublicSubnet2" }]]} does not work. For now I need 1 template for 3 subnet ELBs and 1 template for 4 subnet ELBs.
 * Scalable Subnet Patterns & Best Practices for Multiple Regions & Environments (Production/Staging)
+* Security groups that reference themselves. When you have a cluster using the same security group and each node in the cluster needs to communicate with other nodes in the cluster there's a need to create a Security Group rule with ports where the source is the same security group ID. How do you do this with CloudFormation?
 * Please suggest agenda topics you'd like to see us cover! Fork this repo, add your items to this list, then submit a Pull Request! If we merge your PR, we'll cover the topic in this session!
 
 ## Agenda Overview
