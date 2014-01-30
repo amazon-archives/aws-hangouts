@@ -2,7 +2,7 @@ AWS CloudFormation Office Hours: January 30, 2014
 ========================================================
 Thanks for joining AWS Developer Community Manager Evan Brown for CloudFormation Office Hours. The Hangout starts at 9:00 AM PST on Thursday, January 30, and is scheduled for 30 minutes.
 
-This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/12/215/621/), a Software Development Engineer at AWS. You'll learn from Adam how to securely download content from S3 onto your EC2 Instances when using `cfn-init`, and he'll hang around to help answer questions.
+This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/12/215/621/), a Software Development Engineer at AWS, and Chetan Dandekar, Senior Product Manager for CloudFormation. You'll learn from Adam how to securely download content from S3 onto your EC2 Instances when using `cfn-init`, and he'll hang around to help answer questions.
 
 [Check out the index](../README.md) for a list of our previous Hangouts, including detailed agenda and recordings.
 
@@ -10,7 +10,6 @@ This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/
 * New features since the last Hangout
 * Community agenda items
 * Feature Highlight: Adam Thomas covers using AWS::CloudFormation::Authentication for secure file and sources downloads with `cfn-init`
-* Focus on the Forums: Top posts and answers of the week
 * Your Q&A
 
 ## About the Q&A
@@ -26,6 +25,8 @@ On January 27 CloudFormation added 2 new features:
 1. **Auto Scaling scheduled actions support**: You can scale the number of Amazon EC2 instances in an Auto Scaling group based on a schedule. By using a schedule, you can scale applications in response to predictable load changes. For more information, see [AWS::AutoScaling::ScheduledAction](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-as-scheduledaction.html).
 
 2. **Amazon DynamoDB secondary indexes**: You can create local and global secondary indexes for DynamoDB databases. By using secondary indexes, you can efficiently access data with attributes other than the primary key. For more information, see [AWS::DynamoDB::Table](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-table.html).
+
+3. **Amazon SQS dead letter queues**: You can specify a dead letter queue, where messages are sent when the source queue fails to process on them. For more information, see [AWS::SQS::Queue](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-sqs-queues.html).
 
 You can always find the latest release notes at [http://aws.amazon.com/releasenotes/AWS-CloudFormation](http://aws.amazon.com/releasenotes/AWS-CloudFormation)
 
@@ -293,8 +294,6 @@ Authentication can be tricky to get right, and the failure modes are not obvious
 
         `[ERROR] HTTP Error 404 : <?xml version="1.0" encoding="UTF-8"?><Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message>`
         `<BucketName>adamthom-hangouts-demozzzz</BucketName>...`
-
-## Focus on the Forums
 
 ## Q&A
 
