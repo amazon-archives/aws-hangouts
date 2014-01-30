@@ -1,0 +1,157 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Description": "An example of using IAM roles to securely download from S3. See the guide at https://github.com/evandbrown/aws-hangouts/tree/master/20140130_cfn **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+
+    "Parameters": {
+
+        "S3Bucket": {
+            "Type": "String",
+            "Description": "An S3 bucket in your account that contains index.html and images.zip"
+        }
+
+    },
+
+    "Mappings" : {
+        "AWSRegion2AMI" : {
+            "us-east-1"      : { "id" : "ami-bba18dd2" },
+            "us-west-2"      : { "id" : "ami-ccf297fc" },
+            "us-west-1"      : { "id" : "ami-a43909e1" },
+            "eu-west-1"      : { "id" : "ami-5256b825" },
+            "ap-southeast-1" : { "id" : "ami-b4baeee6" },
+            "ap-southeast-2" : { "id" : "ami-5ba83761" },
+            "ap-northeast-1" : { "id" : "ami-0d13700c" },
+            "sa-east-1"      : { "id" : "ami-c99130d4" }
+        }
+    },
+
+    "Resources": {
+        "InstanceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [ "ec2.amazonaws.com" ]
+                            },
+                            "Action": [ "sts:AssumeRole" ]
+                        }
+                    ]
+                },
+                "Path": "/"
+            }
+        },
+        "RolePolicies": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "S3Download",
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [ "s3:GetObject" ],
+                            "Effect": "Allow",
+                            "Resource": [ { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "S3Bucket" }, "/index.html"]] },
+                                          { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "S3Bucket" }, "/images.zip"]] }]
+                        }
+                    ]
+                },
+                "Roles": [ { "Ref": "InstanceRole" } ]
+            }
+        },
+        "InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [ { "Ref": "InstanceRole" } ]
+            }
+        },
+        "SecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "HTTP Access",
+                "SecurityGroupIngress" : [{
+                    "CidrIp" : "0.0.0.0/0",
+                    "FromPort" : "80",
+                    "ToPort" : "80",
+                    "IpProtocol" : "tcp"
+                }]
+            }
+        },
+        "WebServer" : {
+            "Type" : "AWS::EC2::Instance",
+            "Properties" : {
+                "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
+                "InstanceType" : "t1.micro",
+                "SecurityGroups" : [ { "Ref" : "SecurityGroup" } ],
+                "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" }, "id" ] },
+                "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+                              "#!/bin/bash -v\n",
+                              "yum update -y aws-cfn-bootstrap\n",
+
+                              "# Helper function\n",
+                              "function error_exit\n",
+                              "{\n",
+                              "  /opt/aws/bin/cfn-signal -s false -r \"$1\" '", { "Ref" : "WaitHandle" }, "'\n",
+                              "  exit 1\n",
+                              "}\n",
+
+                              "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r WebServer ",
+                              "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+                              "/opt/aws/bin/cfn-signal -e $? '", { "Ref" : "WaitHandle" }, "'\n"]]}}
+            },
+            "Metadata" : {
+                "AWS::CloudFormation::Authentication" : {
+                    "S3AccessCreds" : {
+                       "type" : "S3",
+                       "roleName" : { "Ref" : "InstanceRole" },
+                       "buckets" : [{ "Ref" : "S3Bucket" }]
+                    }
+                },
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "packages" : { "yum" : { "httpd" : "" } },
+                        "files" : {
+                            "/var/www/html/index.html" : {
+                                "source" : { "Fn::Join" : ["", ["https://", { "Ref" : "S3Bucket" }, ".s3.amazonaws.com/index.html"]] },
+                                "mode" : "000400",
+                                "owner" : "apache",
+                                "group" : "apache",
+                                "authentication" : "S3AccessCreds"
+                            }
+                        },
+                        "sources" : {
+                            "/var/www/html" : { "Fn::Join" : ["", ["https://", { "Ref" : "S3Bucket" }, ".s3.amazonaws.com/images.zip"]] }
+                        },
+                        "services" : {
+                            "sysvinit" : {
+                                "httpd" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "WaitHandle" : {
+            "Type" : "AWS::CloudFormation::WaitConditionHandle"
+        },
+        "WaitCondition" : {
+            "Type" : "AWS::CloudFormation::WaitCondition",
+            "DependsOn" : "WebServer",
+            "Properties" : {
+                "Handle" : {"Ref" : "WaitHandle"},
+                "Timeout" : "300"
+            }
+        }
+    },
+    "Outputs" : {
+        "WebsiteURL" : {
+            "Description" : "Website URL",
+            "Value" : { "Fn::Join" : ["", ["http://", { "Fn::GetAtt" : [ "WebServer", "PublicDnsName" ]}]]}
+        }
+    }
+}
