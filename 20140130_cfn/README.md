@@ -2,14 +2,14 @@ AWS CloudFormation Office Hours: January 30, 2014
 ========================================================
 Thanks for joining AWS Developer Community Manager Evan Brown for CloudFormation Office Hours. The Hangout starts at 9:00 AM PST on Thursday, January 30, and is scheduled for 30 minutes.
 
-This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/12/215/621/), a Software Deverlopment Engineer at AWS. You'll learn from Adam how to securely download content from S3 onto your EC2 Instances when using `cfn-init`, and he'll hang around to help answer questions.
+This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/12/215/621/), a Software Development Engineer at AWS. You'll learn from Adam how to securely download content from S3 onto your EC2 Instances when using `cfn-init`, and he'll hang around to help answer questions.
 
 [Check out the index](../README.md) for a list of our previous Hangouts, including detailed agenda and recordings.
 
 ## Agenda Overview
 * New features since the last Hangout
 * Community agenda items
-* Feature Highlight: Adam Thomas covers using AWS::CloudFormation::Authentication for secure file and sources downloda with `cfn-init`
+* Feature Highlight: Adam Thomas covers using AWS::CloudFormation::Authentication for secure file and sources downloads with `cfn-init`
 * Focus on the Forums: Top posts and answers of the week
 * Your Q&A
 
@@ -111,6 +111,188 @@ Kudos to the [alanwill](https://github.com/alanwill), [anthroprose](https://gith
 * Please suggest agenda topics you'd like to see us cover! Fork this repo, add your items to this list, then submit a Pull Request! If we merge your PR, we'll cover the topic in this session!
 
 ## Feature Highlight: AWS::CloudFormation::Authentication
+
+CloudFormation produces a helper script named [cfn-init](http://aws.amazon.com/developertools/4026240853893296) that performs one function: getting your application onto a CloudFormation-created EC2 instance.  Cfn-init can do a lot of things (see the [documentation](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html) for more), but one of the most used features is downloading files and sources.  The difference a file and a source is that a source is extracted once it has been downloaded.
+
+There is a lot of documentation about AWS::CloudFormation::Authentication; two good resources are the [official documentation](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-authentication.html) and Evan's [blog](http://blogs.aws.amazon.com/application-management/post/Tx3LKFZ27CWZBKO/Authenticated-File-Downloads-with-CloudFormation) on the subject.  Instead of going over every kind of authentication, let's look at the most common kind: IAM Roles with downloads from S3.
+
+I've created a [sample template](s3-role-authentication.json) that we'll use as a demonstration of S3 role downloads.  Since we can't create inline S3 content in templates, this requires a little bit of setup:
+
+1. Create an S3 bucket in your region of choice
+2. Upload [an index page](index.html) as `index.html` and some [classy images](images.zip) as `images.zip`
+3. Create a stack using the [sample template](s3-role-authentication.json). The only parameter is the name of your S3 Bucket.
+4. When the stack hits CREATE_COMPLETE, click on the link in the Outputs tab.
+
+Reminder: this sample uses AWS resources, so it may cost you money if you exceed the [free tier](http://aws.amazon.com/free/)
+
+The mechanics of the template are pretty straightforward.  First, we have to create a role and an instance profile:
+
+```json
+"InstanceRole": {
+    "Type": "AWS::IAM::Role",
+    "Properties": {
+        "AssumeRolePolicyDocument": {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": [ "ec2.amazonaws.com" ]
+                    },
+                    "Action": [ "sts:AssumeRole" ]
+                }
+            ]
+        },
+        "Path": "/"
+    }
+},
+"RolePolicies": {
+    "Type": "AWS::IAM::Policy",
+    "Properties": {
+        "PolicyName": "S3Download",
+        "PolicyDocument": {
+            "Statement": [
+                {
+                    "Action": [ "s3:GetObject" ],
+                    "Effect": "Allow",
+                    "Resource": [ { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "S3Bucket" }, "/index.html"]] },
+                                  { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "S3Bucket" }, "/images.zip"]] }]
+                }
+            ]
+        },
+        "Roles": [ { "Ref": "InstanceRole" } ]
+    }
+},
+"InstanceProfile": {
+    "Type": "AWS::IAM::InstanceProfile",
+    "Properties": {
+        "Path": "/",
+        "Roles": [ { "Ref": "InstanceRole" } ]
+    }
+}
+```
+
+A few things to take away from this snippet:
+1. The IAM role is scoped to the [least privilege](http://docs.aws.amazon.com/IAM/latest/UserGuide/IAMBestPractices.html#grant-least-privilege) necessary to download the files.  You only need GetObject for the objects you intend to download -- ListBucket, for instance, is not necessary.
+2. An IAM Instance Profile is created, which allows us to associate the IAM Profile to the EC2 instance.  This will allow cfn-init to make authenticated requests to S3.
+
+Next, let's look at the EC2 instance definition.
+```json
+"WebServer" : {
+    "Type" : "AWS::EC2::Instance",
+    "Properties" : {
+        "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
+        "InstanceType" : "t1.micro",
+        "SecurityGroups" : [ { "Ref" : "SecurityGroup" } ]
+        ...
+    }
+    ...
+}
+```
+
+The only real takeaway here is the IamInstanceProfile property, which lets the instance access the role we defined previously.
+
+Finally, we set up the EC2 instance's software configuration in Metadata.  Cfn-init will read this metadata when determining how to set up the instance.
+
+```json
+"Metadata" : {
+    "AWS::CloudFormation::Authentication" : {
+        "S3AccessCreds" : {
+            "type" : "S3",
+            "roleName" : { "Ref" : "InstanceRole" },
+            "buckets" : [{ "Ref" : "S3Bucket" }]
+        }
+    },
+    "AWS::CloudFormation::Init" : {
+        "config" : {
+            "files" : {
+                "/var/www/html/index.html" : {
+                    "source" : { "Fn::Join" : ["", ["https://", { "Ref" : "S3Bucket" }, ".s3.amazonaws.com/index.html"]] },
+                    "mode" : "000400",
+                    "owner" : "apache",
+                    "group" : "apache",
+                    "authentication" : "S3AccessCreds"
+                }
+            },
+            "sources" : {
+                "/var/www/html" : { "Fn::Join" : ["", ["https://", { "Ref" : "S3Bucket" }, ".s3.amazonaws.com/images.zip"]] }
+            },
+            "services" : {
+                "sysvinit" : {
+                    "httpd" : {
+                        "enabled" : "true",
+                        "ensureRunning" : "true"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+In the `AWS::CloudFormation::Authentication` section, we configure the credentials available to cfn-init. This can include HTTP basic usernames and passwords, AWS Access Keys and Secret Keys, and IAM roles.  Let's take a closer look at the credential:
+```json
+"S3AccessCreds" : {
+    "type" : "S3",
+    "roleName" : { "Ref" : "InstanceRole" },
+    "buckets" : [{ "Ref" : "S3Bucket" }]
+}
+```
+The `S3` type is, as you would expect, used to authenticate against S3.  `roleName` refers to the role linked to the EC2 instance (not the instance profile).  `buckets` takes a list of bucket names; cfn-init will authenticate any request to the listed buckets with this credential automatically.
+
+Next, let's look at an authenticated file download:
+```json
+"files" : {
+    "/var/www/html/index.html" : {
+        "source" : { "Fn::Join" : ["", ["https://", { "Ref" : "S3Bucket" }, ".s3.amazonaws.com/index.html"]] },
+        "mode" : "000400",
+        "owner" : "apache",
+        "group" : "apache",
+        "authentication" : "S3AccessCreds"
+    }
+}
+```
+The `authentication` key tells cfn-init to explicitly use S3AccessCreds.  In this case, it is superfluous -- since we added `{ "Ref" : "S3Bucket" }` to the list of buckets in the definition of S3AccessCreds, this configuration will do nothing.  In a more practical scenario, you could use the `authentication` key to override the default authentication behavior configured by the `buckets` setting.
+
+Finally, the source:
+```json
+"sources" : {
+    "/var/www/html" : { "Fn::Join" : ["", ["https://", { "Ref" : "S3Bucket" }, ".s3.amazonaws.com/images.zip"]] }
+}
+```
+Here, we don't specify an `authentication` key.  That's because `sources` does not support it.  You *must* use the `buckets` setting in the authentication configuration to make an authenticated `sources` download.
+
+### Troubleshooting Authentication
+
+Authentication can be tricky to get right, and the failure modes are not obvious.
+
+1. Check the logs!
+
+    /var/log/cfn-init.log is your primary source for cfn-init troubleshooting.  You should be able to determine which error code S3 is returning, and which file it's failing on.  If you want more output, you can run cfn-init with -v for verbose output
+
+2. Check your nesting
+
+    The most common mistake people make is nesting `AWS::CloudFormation::Authentication` beneath `AWS::CloudFormation::Init`.  They should be siblings (meaning both should be direct children of `Metadata`), else cfn-init will not be able to find the configuration
+
+3. Check your case
+
+    S3 Object Keys are case sensitive; mismatching case will cause your downloads to fail.
+
+3. Know your S3 error codes
+
+    1. Error code 403: Your user does not have permission, or the key you requested in a *non-public bucket* does not exist
+
+        `[ERROR] Unhandled exception during build: Failed to retrieve https://adamthom-hangouts-demo.s3.amazonaws.com/index.html2: HTTP Error 403 :...`
+
+    2. Error code 404: The key you requested in a *publicly-listable bucket* does not exist
+
+        `[ERROR] Error encountered during build of config: Failed to retrieve https://adamthom-hangouts-demo.s3.amazonaws.com/index.html2:`
+        `HTTP Error 404 : <?xml version="1.0" encoding="UTF-8"?><Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message>`
+        `<Key>index.html2</Key>...`
+
+        or the bucket itself does not exist:
+
+        `[ERROR] HTTP Error 404 : <?xml version="1.0" encoding="UTF-8"?><Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message>`
+        `<BucketName>adamthom-hangouts-demozzzz</BucketName>...`
 
 ## Focus on the Forums
 
