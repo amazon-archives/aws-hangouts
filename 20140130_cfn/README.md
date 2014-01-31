@@ -6,6 +6,11 @@ This week we're joined by [Adam Thomas](http://www.linkedin.com/pub/adam-thomas/
 
 [Check out the index](../README.md) for a list of our previous Hangouts, including detailed agenda and recordings.
 
+## The Recording
+Below the recording of the January 30 session, including Q&A:
+
+[![](img/video.png)](https://plus.google.com/events/cl5s04iq8t39861dvh30fv2h58c)
+
 ## Agenda Overview
 * New features since the last Hangout
 * Community agenda items
