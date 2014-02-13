@@ -8,7 +8,7 @@ Thanks for joining AWS Developer Community Manager Evan Brown for CloudFormation
 ## Agenda Overview
 * New features since the last Hangout
 * Community agenda items
-* Feature Highlight: TBD
+* Feature Highlight: VPC
 * Your Q&A
 
 ## About the Q&A
