@@ -64,6 +64,19 @@ We'll walk through building a VPC with public and private subnets, including:
 * Extending our template to work in multiple regions
 * Choosing stack outputs to simplify deploying an app into the VPC
 
+### First Things First
+Let's run the sample with the AWS CLI before we start:
+
+```
+aws cloudformation create-stack \
+  --stack-name "vpc-demo" \
+  --template-body file://vpc-scaffold.cfn.json \
+  --parameters ParameterKey=KeyName,ParameterValue=evbrown-amazon \ ParameterKey=VPCAvailabilityZone1,ParameterValue=eu-west-1a \ ParameterKey=VPCAvailabilityZone2,ParameterValue=eu-west-1c \
+  --region eu-west-1
+```
+
+If you run this yourself, be sure to set the KeyName parameter to the name of your EC2 Key Pair.
+
 ### Template Scaffold
 Our sample VPC template - [vpc-scaffold.cfn.json](vpc-scaffold.cfn.json) - defines the following Parameters, Resources, and Outputs:
 
@@ -368,6 +381,18 @@ Finally, we'll need information from this stack to launch EC2 instances and appl
 * VPCAvailabilityZone1
 * VPCAvailabilityZone2
 * VPCId
+
+### Version Controlled Security!
+Let's say we want to modify the `InstanceSecurityGroup` to open TCP 443. Let's add Ingress and Egress rules, commit the template to git, and update the stack with the CLI:
+
+```
+aws cloudformation update-stack \
+  --stack-name "vpc-demo" \
+  --template-body file://vpc-scaffold.cfn.json \
+  --parameters ParameterKey=KeyName,ParameterValue=evbrown-amazon \ ParameterKey=VPCAvailabilityZone1,ParameterValue=eu-west-1a \ ParameterKey=VPCAvailabilityZone2,ParameterValue=eu-west-1c \
+  --region eu-west-1
+```
+
 
 ## Q&A
 
